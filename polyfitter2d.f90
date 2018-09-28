@@ -113,6 +113,15 @@ module mod_polyfitter2d
                 if (present(r2))  r2  = 1 - sum((y - y_exact)**2) &
                                             / sum((y_exact - sum(y_exact)/N)**2)
             end if
+        end subroutine
 
+        subroutine check_info(info, routine_name)
+            integer, intent(in) :: info
+            character(len=*) :: routine_name
+
+            if (info /= 0) then
+                write(*, "(a, i0)") "ERROR in " // routine_name // ":, info = ", info
+                error stop
+            end if
         end subroutine
 end module
