@@ -109,7 +109,7 @@ module mod_polyfitter2d
 
             if (present(y_exact)) then
                 if (present(mse)) mse = sum((y - y_exact)**2)/N
-                if (present(r2)) r2   = 1 - sum((y - y_exact)**2) &
+                if (present(r2))  r2  = 1 - sum((y - y_exact)**2) &
                                             / sum((y_exact - sum(y_exact)/N)**2)
             end if
 
