@@ -7,11 +7,11 @@ module mod_polyfitter2d
     end interface
 
     type, public :: polyfitter2d
-        real(dp), allocatable :: beta(:), X(:,:), y(:)
+        real(dp), allocatable :: beta(:), X(:,:)
         integer :: d, p, N
 
         contains
-            procedure :: create_X, fit
+            procedure :: create_X, fit, predict
     end type polyfitter2d
 
     contains
@@ -30,7 +30,6 @@ module mod_polyfitter2d
             integer :: i, j, idx
 
             self%N = size(y_values)
-            self%y = y_values
 
             if (allocated(self%X)) deallocate(self%X)
             allocate(self%X(self%N, self%p))
@@ -63,10 +62,10 @@ module mod_polyfitter2d
 
             ! copies, dgels modifies
             X = self%x
-            y = self%y
+            y = y_values
 
             call dgels("N", N, p, 1, X, N, y, N, work, lwork, info)
-            lwork = work(1)
+            lwork = nint(work(1))
             deallocate(work)
             allocate(work(lwork))
             call dgels("N", N, p, 1, X, N, y, N, work, lwork, info)
@@ -77,6 +76,42 @@ module mod_polyfitter2d
             end if
 
             self%beta = y(1:p)
+        end subroutine
+
+        subroutine predict(self, x, y, y_exact, mse, r2)
+            class(polyfitter2d), intent(in) :: self
+            real(dp), intent(in) :: x(:,:)
+            real(dp), intent(inout) :: y(:)
+            real(dp), intent(out), optional :: y_exact(:), mse, r2
+
+            integer :: N, d, p, idx, i, j
+
+            if (.not. allocated(self%beta)) then
+                write(*,*) "ERROR: Attempting to predict without fitting"
+                error stop
+            end if
+
+            N = size(x,1)
+            d = self%d
+            p = self%p
+
+            y(:) = 0
+
+            associate(beta => self%beta)
+                idx = 0
+                do j = 0, d
+                    do i = 0, d-j
+                        idx = idx + 1
+                        y(:) = y(:) + beta(idx) * x(:,1)**i * x(:,2)**j
+                    end do
+                end do
+            end associate
+
+            if (present(y_exact)) then
+                if (present(mse)) mse = sum((y - y_exact)**2)/N
+                if (present(r2)) r2   = 1 - sum((y - y_exact)**2) &
+                                            / sum((y_exact - sum(y_exact)/N)**2)
+            end if
 
         end subroutine
 end module
