@@ -11,7 +11,8 @@ module mod_polyfitter2d
         integer :: d, p, N
 
         contains
-            procedure :: create_X, fit, predict
+            procedure :: create_X, predict
+            procedure :: fit => fit_ols
     end type polyfitter2d
 
     contains
@@ -23,13 +24,13 @@ module mod_polyfitter2d
             polyfitter%p = (d+1)*(d+2)/2
         end function
 
-        subroutine create_X(self, x_values, y_values)
+        subroutine create_X(self, x_values)
             class(polyfitter2d), intent(inout) :: self
-            real(dp), intent(in) :: x_values(:,:), y_values(:)
+            real(dp), intent(in) :: x_values(:,:)
 
             integer :: i, j, idx
 
-            self%N = size(y_values)
+            self%N = size(x_values,1)
 
             if (allocated(self%X)) deallocate(self%X)
             allocate(self%X(self%N, self%p))
@@ -45,14 +46,14 @@ module mod_polyfitter2d
             end associate
         end subroutine
 
-        subroutine fit(self, x_values, y_values)
+        subroutine fit_ols(self, x_values, y_values)
             class(polyfitter2d), intent(inout) :: self
             real(dp), intent(in) :: x_values(:,:), y_values(:)
 
             integer :: lwork, info, N, p
             real(dp), allocatable :: work(:), X(:,:), y(:)
 
-            call self%create_X(x_values, y_values)
+            call self%create_X(x_values)
 
             lwork = -1
             allocate(work(1))
