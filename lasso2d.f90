@@ -73,20 +73,23 @@ module mod_lasso2d
             beta(:) = 1.0d0
 
             do
-                grad = matmul(H,beta)
-                !call dsymv('L', p, 1.0d0, H, p, beta, 1, 0, grad, 1)
-
-                grad(:) = grad(:) - two_X_T_y(:) + lambda*sgn(beta(:))
+!                 grad = matmul(H,beta)
+!                 !call dsymv('L', p, 1.0d0, H, p, beta, 1, 0, grad, 1)
+!
+!                 grad(:) = grad(:) - two_X_T_y(:) + lambda*sgn(beta(:))
+!                 norm = norm2(grad)
+!
+!                 call dpptrs('L', p, 1, H_cholesky, grad, p, info)
+!
+!                 call check_info(info, "dpptrs")
+!
+!                 beta(:) = beta(:) - grad(:)
+!
+                grad(:) = -2*matmul(X_T, y_values - matmul(self%X,beta)) + lambda * sgn(beta)
                 norm = norm2(grad)
 
-                call dpptrs('L', p, 1, H_cholesky, grad, p, info)
-
-                call check_info(info, "dpptrs")
-
-                beta(:) = beta(:) - grad(:)
-
+                beta(:) = beta - 0.0001 * grad
                 write(*,*) "Norm of gradient:", norm
-
                 if (norm < self%tolerance) exit
             end do
 
