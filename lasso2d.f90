@@ -63,10 +63,6 @@ module mod_lasso2d
             call dtrttp('L', p, H, p, H_cholesky, info)
             call check_info(info, "dtrttp")
 
-            !do i = 1, p
-            !    write(*,*) (H(i,j), j = 1, p)
-            !end do
-
             call dpptrf('L', p, H_cholesky, info)
             call check_info(info, "dpptrf")
 
