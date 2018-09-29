@@ -40,13 +40,14 @@ module mod_lasso2d
             real(dp), allocatable :: X_T(:,:), X_T_X(:,:), H(:,:), H_cholesky(:), &
                                      X_T_y(:), two_X_T_y(:), &
                                      beta(:), grad(:)
-            real(dp) :: lambda, norm
+            real(dp) :: lambda, grad_norm, tolerance
 
             call self%create_X(x_values)
 
             N = self%N
             p = self%p
             lambda = self%lambda
+            tolerance = self%tolerance
 
             associate(X => self%X)
                 X_T = transpose(X)
@@ -70,22 +71,23 @@ module mod_lasso2d
             call check_info(info, "dpptrf")
 
             allocate(beta(p), grad(p))
-            beta(:) = 1.0d0
+            grad_norm = 2*tolerance
 
-            do
-                beta(:) = two_X_T_y(:) - lambda*sgn(beta(:))
+            !/lassostart/!
+            beta(:) = 1
+            minimisation: do while (grad_norm > tolerance)
+                ! calculate right-hand side
+                beta(:) = two_X_T_y - lambda*sgn(beta)
+
+                ! solve H beta_new = 2 X^T y - lambda sgn(beta_old)
                 call dpptrs('L', p, 1, H_cholesky, beta, p, info)
-
                 call check_info(info, "dpptrs")
 
-
-                grad(:) = -two_X_T_y + matmul(H,beta) + lambda * sgn(beta)
-                norm = norm2(grad)
-!
-!                beta(:) = beta - 0.0001 * grad
-                write(*,*) "Norm of gradient:", norm
-                if (norm < self%tolerance) exit
-            end do
+                ! calculate gradient and its norm
+                grad(:) = - two_X_T_y + matmul(H, beta) + lambda*sgn(beta)
+                grad_norm = norm2(grad)
+            end do minimisation
+            !/lassoend/!
 
             self%beta = beta
         end subroutine

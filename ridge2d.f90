@@ -42,10 +42,11 @@ module mod_ridge2d
             associate(X => self%X)
                 X_T = transpose(X)
                 A = matmul(X_T, X)
-                do i = 1, p
-                    A(i,i) = A(i,i) + lambda
-                end do
             end associate
+
+            do i = 1, p
+                A(i,i) = A(i,i) + lambda
+            end do
 
             b = matmul(X_T, y_values)
 
