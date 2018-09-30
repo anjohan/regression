@@ -11,7 +11,7 @@ module mod_polyfitter2d
         integer :: d, p, N
 
         contains
-            procedure :: create_X, predict
+            procedure :: create_X, init_X, predict
             procedure :: fit => fit_ols
     end type polyfitter2d
 
@@ -46,14 +46,35 @@ module mod_polyfitter2d
             end associate
         end subroutine
 
-        subroutine fit_ols(self, x_values, y_values)
+        subroutine init_X(self, x, x_is_matrix)
+            class(polyfitter2d), intent(inout) :: self
+            real(dp), intent(in) :: x(:,:)
+            logical, intent(in), optional :: x_is_matrix
+
+            if (.not. present(x_is_matrix)) then
+                call self%create_X(x)
+            else
+                if (x_is_matrix) then
+                    self%X = x
+                else
+                    call self%create_X(x)
+                end if
+            end if
+        end subroutine
+
+        subroutine fit_ols(self, x_values, y_values, x_is_matrix)
             class(polyfitter2d), intent(inout) :: self
             real(dp), intent(in) :: x_values(:,:), y_values(:)
+            logical, intent(in), optional :: x_is_matrix
 
             integer :: lwork, info, N, p
             real(dp), allocatable :: work(:), X(:,:), y(:)
 
-            call self%create_X(x_values)
+            if (present(x_is_matrix)) then
+                call self%init_X(x_values, x_is_matrix)
+            else
+                call self%init_X(x_values)
+            end if
 
             lwork = -1
             allocate(work(1))
@@ -83,7 +104,8 @@ module mod_polyfitter2d
             class(polyfitter2d), intent(in) :: self
             real(dp), intent(in) :: x(:,:)
             real(dp), intent(inout) :: y(:)
-            real(dp), intent(out), optional :: y_exact(:), mse, r2
+            real(dp), intent(out), optional :: mse, r2
+            real(dp), intent(in), optional  :: y_exact(:)
 
             integer :: N, d, p, idx, i, j
 

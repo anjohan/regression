@@ -25,15 +25,20 @@ module mod_ridge2d
             ridge%lambda = lambda
         end function
 
-        subroutine fit_ridge(self, x_values, y_values)
+        subroutine fit_ridge(self, x_values, y_values, x_is_matrix)
             class(ridge2d), intent(inout) :: self
             real(dp), intent(in) :: x_values(:,:), y_values(:)
+            logical, intent(in), optional :: x_is_matrix
 
             integer :: N, p, info, i
             real(dp), allocatable :: X_T(:,:), A(:,:), b(:)
             real(dp) :: lambda
 
-            call self%create_X(x_values)
+            if (present(x_is_matrix)) then
+                call self%init_X(x_values, x_is_matrix)
+            else
+                call self%init_X(x_values)
+            end if
 
             N = self%N
             p = self%p

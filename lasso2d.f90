@@ -32,17 +32,22 @@ module mod_lasso2d
             end if
         end function
 
-        subroutine fit_lasso(self, x_values, y_values)
+        subroutine fit_lasso(self, x_values, y_values, x_is_matrix)
             class(lasso2d), intent(inout) :: self
             real(dp), intent(in) :: x_values(:,:), y_values(:)
+            logical, intent(in), optional :: x_is_matrix
 
-            integer :: N, p, info, i, j
+            integer :: N, p, info
             real(dp), allocatable :: X_T(:,:), X_T_X(:,:), H(:,:), H_cholesky(:), &
                                      X_T_y(:), two_X_T_y(:), &
                                      beta(:), grad(:)
             real(dp) :: lambda, grad_norm, tolerance
 
-            call self%create_X(x_values)
+            if (present(x_is_matrix)) then
+                call self%init_X(x_values, x_is_matrix)
+            else
+                call self%init_X(x_values)
+            end if
 
             N = self%N
             p = self%p
