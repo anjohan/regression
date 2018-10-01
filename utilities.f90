@@ -27,11 +27,12 @@ module mod_utilities
             y(:) = y(:) + sigma*noise
         end subroutine
 
-        function random_meshgrid(N) result(x)
+        function random_meshgrid(N, filebase) result(x)
             integer, intent(in) :: N
+            character(len=*), optional :: filebase
 
             real(dp), allocatable :: x1(:), x2(:), x(:,:)
-            integer :: info, i, j, idx
+            integer :: info, i, j, idx, u1, u2
 
             allocate(x1(N), x2(N), x(N**2,2))
 
@@ -50,6 +51,16 @@ module mod_utilities
                     x(idx, :) = [x1(i), x2(j)]
                 end do
             end do
+
+            if(.not. present(filebase)) return
+
+            open(newunit=u1, file=filebase // "_x1.dat", status="replace")
+            write(u1, "(*(f0.6,:,/))") x1
+            close(u1)
+            open(newunit=u2, file=filebase // "_x2.dat", status="replace")
+            write(u2, "(*(f0.6,:,/))") x2
+            close(u2)
+
         end function
 
         subroutine check_info(info, routine_name)
