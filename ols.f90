@@ -14,7 +14,7 @@ module mod_ols
 
     contains
         function init_ols(basis, X) result(self)
-            class(basis_function), intent(in), optional :: basis(:)
+            class(basisfunction), intent(in), optional :: basis(:)
             real(dp), intent(in), optional :: X(:,:)
             type(ols) :: self
 

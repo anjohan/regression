@@ -17,7 +17,7 @@ module mod_ridge
     contains
         function init_ridge(lambda, basis, X) result(self)
             real(dp), intent(in) :: lambda
-            class(basis_function), intent(in), optional :: basis(:)
+            class(basisfunction), intent(in), optional :: basis(:)
             real(dp), intent(in), optional :: X(:,:)
 
             type(ridge) :: self

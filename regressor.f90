@@ -4,7 +4,7 @@ module mod_regressor
     implicit none
 
     type, public, abstract :: regressor
-        class(basis_function), allocatable :: basis(:)
+        class(basisfunction), allocatable :: basis(:)
         real(dp), allocatable :: beta(:), X(:,:)
 
         contains

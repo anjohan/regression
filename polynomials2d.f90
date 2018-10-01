@@ -7,7 +7,7 @@ module mod_polynomials2d
         procedure :: init_polynomial2d
     end interface
 
-    type, public, extends(basis_function) :: polynomial2d
+    type, public, extends(basisfunction) :: polynomial2d
         integer :: x1_pow, x2_pow
 
         contains

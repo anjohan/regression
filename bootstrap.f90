@@ -11,7 +11,6 @@ module mod_bootstrap
         class(regressor), allocatable :: fitter
         real(dp), allocatable :: x(:,:), y(:), y_predictions(:,:), betas(:,:), &
                                  R2s(:), MSEs(:)
-        integer :: N, p
 
         contains
             procedure :: bootstrap

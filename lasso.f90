@@ -17,7 +17,7 @@ module mod_lasso
     contains
         function init_lasso(lambda, basis, X, tolerance) result(self)
             real(dp), intent(in) :: lambda
-            class(basis_function), intent(in), optional :: basis(:)
+            class(basisfunction), intent(in), optional :: basis(:)
             real(dp), intent(in), optional :: X(:,:), tolerance
 
             type(lasso) :: self
