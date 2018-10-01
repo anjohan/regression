@@ -1,41 +1,43 @@
-module mod_lasso2d
+module mod_lasso
     use iso_fortran_env, only: dp => real64
-    use mod_polyfitter2d
+    use mod_regressor
     implicit none
 
-    interface lasso2d
-        procedure :: init_lasso2d
+    interface lasso
+        procedure :: init_lasso
     end interface
 
-    type, public, extends(polyfitter2d) :: lasso2d
+    type, public, extends(regressor) :: lasso
         real(dp) :: lambda, tolerance
 
         contains
-            procedure :: fit => fit_lasso
-    end type lasso2d
+            procedure :: fit
+    end type lasso
 
     contains
-        function init_lasso2d(d, lambda, tolerance) result(lasso)
-            integer, intent(in) :: d
+        function init_lasso(lambda, basis, X, tolerance) result(self)
             real(dp), intent(in) :: lambda
-            real(dp), intent(in), optional :: tolerance
-            type(lasso2d) :: lasso
+            class(basis_function), intent(in), optional :: basis(:)
+            real(dp), intent(in), optional :: X(:,:), tolerance
 
-            lasso%d = d
-            lasso%p = (d+1)*(d+2)/2
-            lasso%lambda = lambda
+            type(lasso) :: self
+
+            self%lambda = lambda
+
+            if (present(basis)) allocate(self%basis, source=basis)
+            if (present(X)) self%X = X
 
             if (present(tolerance)) then
-                lasso%tolerance = tolerance
+                self%tolerance = tolerance
             else
-                lasso%tolerance = 1e-5
+                self%tolerance = 1e-5
             end if
         end function
 
-        subroutine fit_lasso(self, x_values, y_values, x_is_matrix)
-            class(lasso2d), intent(inout) :: self
-            real(dp), intent(in) :: x_values(:,:), y_values(:)
-            logical, intent(in), optional :: x_is_matrix
+        subroutine fit(self, x_values, y_values)
+            class(lasso), intent(inout) :: self
+            real(dp), intent(in), optional :: x_values(:,:)
+            real(dp), intent(in) :: y_values(:)
 
             integer :: N, p, info
             real(dp), allocatable :: X_T(:,:), X_T_X(:,:), H(:,:), H_cholesky(:), &
@@ -43,14 +45,10 @@ module mod_lasso2d
                                      beta(:), grad(:)
             real(dp) :: lambda, grad_norm, tolerance
 
-            if (present(x_is_matrix)) then
-                call self%init_X(x_values, x_is_matrix)
-            else
-                call self%init_X(x_values)
-            end if
+            if (present(x_values)) call self%create_X(x_values)
 
-            N = self%N
-            p = self%p
+            N = size(y_values)
+            p = size(self%basis)
             lambda = self%lambda
             tolerance = self%tolerance
 

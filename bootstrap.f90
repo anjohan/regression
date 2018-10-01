@@ -1,6 +1,6 @@
 module mod_bootstrap
     use iso_fortran_env, only: dp => real64
-    use mod_polyfitter2d
+    use mod_regressor
     implicit none
 
     interface bootstrapper
@@ -8,7 +8,7 @@ module mod_bootstrap
     end interface
 
     type, public :: bootstrapper
-        class(polyfitter2d), allocatable :: regressor
+        class(regressor), allocatable :: fitter
         real(dp), allocatable :: x(:,:), y(:), y_predictions(:,:), betas(:,:), &
                                  R2s(:), MSEs(:)
         integer :: N, p
@@ -18,12 +18,12 @@ module mod_bootstrap
     end type bootstrapper
 
     contains
-        function init_bootstrapper(regressor) result(bs)
-            class(polyfitter2d), intent(in) :: regressor
+        function init_bootstrapper(fitter) result(bs)
+            class(regressor), intent(in) :: fitter
 
             type(bootstrapper) :: bs
 
-            bs%regressor = regressor
+            bs%fitter = fitter
         end function
 
         subroutine bootstrap(self, x, y, num_bootstraps)
@@ -37,7 +37,7 @@ module mod_bootstrap
             integer, allocatable :: indices(:)
 
             N = size(y)
-            p = self%regressor%p
+            p = size(self%fitter%basis)
 
             self%x = x; self%y = y
 
@@ -52,10 +52,10 @@ module mod_bootstrap
             associate(betas => self%betas, &
                       y_predictions => self%y_predictions, &
                       R2s => self%R2s, MSEs => self%MSEs, &
-                      regressor => self%regressor)
+                      fitter => self%fitter)
 
-                call regressor%create_X(x)
-                X_original = regressor%X
+                call fitter%create_X(x)
+                X_original = fitter%X
 
                 bootstraps: do i = 1, num_bootstraps
                     call random_number(tmp_real)
@@ -64,10 +64,12 @@ module mod_bootstrap
                     y_selection(:) = y(indices)
                     X_selection(:,:) = X_original(indices,:)
 
-                    call regressor%fit(x_selection, y_selection, .true.)
-                    call regressor%predict(x, y_predictions(:,i), y, MSEs(i), R2s(i))
+                    fitter%X = X_selection
 
-                    betas(:, i) = regressor%beta
+                    call fitter%fit(y_values=y_selection)
+                    call fitter%predict(x, y_predictions(:,i), y, MSEs(i), R2s(i))
+
+                    betas(:, i) = fitter%beta
                 end do bootstraps
             end associate
         end subroutine
