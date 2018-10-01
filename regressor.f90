@@ -1,6 +1,7 @@
 module mod_regressor
     use iso_fortran_env, only: dp => real64
     use mod_basis
+    use mod_utilities, only: check_info
     implicit none
 
     type, public, abstract :: regressor
@@ -70,15 +71,5 @@ module mod_regressor
                     end do
                 end do
             end associate
-        end subroutine
-
-        subroutine check_info(info, routine_name)
-            integer, intent(in) :: info
-            character(len=*) :: routine_name
-
-            if (info /= 0) then
-                write(*, "(a, i0)") "ERROR in " // routine_name // ":, info = ", info
-                error stop
-            end if
         end subroutine
 end module
