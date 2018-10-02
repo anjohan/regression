@@ -21,6 +21,8 @@ module mod_ols
             if (present(basis)) allocate(self%basis, source=basis)
             if (present(X)) self%X = X
 
+            self%method = "ols"
+
         end function
 
         subroutine fit(self, x_values, y_values)

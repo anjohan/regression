@@ -32,6 +32,8 @@ module mod_lasso
             else
                 self%tolerance = 1e-5
             end if
+
+            self%method = "lasso"
         end function
 
         subroutine fit(self, x_values, y_values)

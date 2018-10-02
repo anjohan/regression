@@ -7,10 +7,19 @@ module mod_regressor
     type, public, abstract :: regressor
         class(basisfunction), allocatable :: basis(:)
         real(dp), allocatable :: beta(:), X(:,:)
+        character(len=:), allocatable :: method
 
         contains
             procedure :: predict, create_X
             procedure(fit_procedure), deferred :: fit
+    end type
+
+    interface regressor_container
+        procedure :: init_regressor_container
+    end interface
+
+    type, public :: regressor_container
+        class(regressor), allocatable :: element
     end type
 
     abstract interface
@@ -23,6 +32,12 @@ module mod_regressor
     end interface
 
     contains
+        function init_regressor_container(fitter) result(self)
+            type(regressor_container) :: self
+            class(regressor), intent(in) :: fitter
+            self%element = fitter
+        end function
+
         subroutine predict(self, x, y, y_exact, mse, r2)
             class(regressor), intent(in) :: self
             real(dp), intent(in) :: x(:,:)

@@ -93,4 +93,16 @@ module mod_utilities
                 error stop
             end if
         end subroutine
+
+        function franke(x) result(y)
+            real(dp), intent(in) :: x(:,:)
+            real(dp), allocatable :: y(:)
+
+            associate(x1 => x(:,1), x2 => x(:,2))
+                y = 0.75 * exp(- (9*x1-2)**2/4  - (9*x2-2)**2/4) &
+                  + 0.75 * exp(- (9*x1+1)**2/49 - (9*x2+1)**2/10) &
+                  + 0.50 * exp(- (9*x1-7)**2/4  - (9*x2-3)**2/4) &
+                  - 0.20 * exp(- (9*x1-4)**2    - (9*x2-7)**2)
+            end associate
+        end function
 end module
