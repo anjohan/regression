@@ -63,6 +63,27 @@ module mod_utilities
 
         end function
 
+        subroutine shuffle(x, y)
+            real(dp), intent(inout) :: x(:,:), y(:)
+
+            integer :: N, i, j
+            real(dp) :: tmp_real, tmp_y
+            real(dp), allocatable :: tmp_x(:)
+
+            N = size(y)
+
+            do i = N, 2, -1
+                call random_number(tmp_real)
+                j = nint((N-1)*tmp_real) + 1
+                tmp_y = y(i)
+                y(i) = y(j)
+                y(j) = tmp_y
+                tmp_x = x(i,:)
+                x(i,:) = x(j,:)
+                x(j,:) = tmp_x(:)
+            end do
+        end subroutine
+
         subroutine check_info(info, routine_name)
             integer, intent(in) :: info
             character(len=*) :: routine_name
