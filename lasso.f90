@@ -8,17 +8,19 @@ module mod_lasso
     end interface
 
     type, public, extends(regressor) :: lasso
-        real(dp) :: lambda, tolerance
+        real(dp) :: lambda, grad_tolerance
+        integer :: max_iterations
 
         contains
             procedure :: fit
     end type lasso
 
     contains
-        function init_lasso(lambda, basis, X, tolerance) result(self)
+        function init_lasso(lambda, basis, X, grad_tolerance, max_iterations) result(self)
             real(dp), intent(in) :: lambda
             class(basisfunction), intent(in), optional :: basis(:)
-            real(dp), intent(in), optional :: X(:,:), tolerance
+            real(dp), intent(in), optional :: X(:,:), grad_tolerance
+            integer, intent(in), optional :: max_iterations
 
             type(lasso) :: self
 
@@ -27,10 +29,16 @@ module mod_lasso
             if (present(basis)) allocate(self%basis, source=basis)
             if (present(X)) self%X = X
 
-            if (present(tolerance)) then
-                self%tolerance = tolerance
+            if (present(grad_tolerance)) then
+                self%grad_tolerance = grad_tolerance
             else
-                self%tolerance = 1e-5
+                self%grad_tolerance = 1e-5
+            end if
+
+            if (present(max_iterations)) then
+                self%max_iterations = max_iterations
+            else
+                self%max_iterations = 100
             end if
 
             self%method = "LASSO"
@@ -41,18 +49,19 @@ module mod_lasso
             real(dp), intent(in), optional :: x_values(:,:)
             real(dp), intent(in) :: y_values(:)
 
-            integer :: N, p, info
+            integer :: N, p, info, iteration, max_iterations
             real(dp), allocatable :: X_T(:,:), X_T_X(:,:), H(:,:), H_cholesky(:), &
                                      X_T_y(:), two_X_T_y(:), &
                                      beta(:), grad(:)
-            real(dp) :: lambda, grad_norm, tolerance
+            real(dp) :: lambda, grad_norm, grad_tolerance
 
             if (present(x_values)) call self%create_X(x_values)
 
             N = size(y_values)
             p = size(self%basis)
             lambda = self%lambda
-            tolerance = self%tolerance
+            grad_tolerance = self%grad_tolerance
+            max_iterations = self%max_iterations
 
             associate(X => self%X)
                 X_T = transpose(X)
@@ -72,11 +81,14 @@ module mod_lasso
             call check_info(info, "dpptrf")
 
             allocate(beta(p), grad(p))
-            grad_norm = 2*tolerance
+            grad_norm = 2*grad_tolerance
 
             !/lassostart/!
+            iteration = 0
             beta(:) = 1
-            minimisation: do while (grad_norm > tolerance)
+            minimisation: do while (grad_norm > grad_tolerance &
+                                    .and. iteration < max_iterations)
+                iteration = iteration + 1
                 ! calculate right-hand side
                 beta(:) = two_X_T_y - lambda*sgn(beta)
 

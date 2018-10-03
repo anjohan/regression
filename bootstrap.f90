@@ -76,9 +76,14 @@ module mod_bootstrap
 
                 call fitter%create_X(x_train)
                 X_original = fitter%X
-                write(*,*) size(y_train)
+
+                write(*, "(a)", advance="no") "Bootstrapping " // fitter%method // ": ["
 
                 bootstraps: do i = 1, num_bootstraps
+                    if (mod(i, max(1,num_bootstraps/10)) == 0) then
+                        write(*, "(a)", advance="no") "="
+                    end if
+
                     call random_number(tmp_real)
                     indices(:) = nint((N_train-1)*tmp_real) + 1
 
@@ -93,6 +98,7 @@ module mod_bootstrap
 
                     betas(:, i) = fitter%beta
                 end do bootstraps
+                write(*,"(a)") "]"
             end associate
 
             call self%post_analysis()
