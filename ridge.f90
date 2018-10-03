@@ -27,7 +27,7 @@ module mod_ridge
             if (present(basis)) allocate(self%basis, source=basis)
             if (present(X)) self%X = X
 
-            self%method = "ridge"
+            self%method = "Ridge"
         end function
 
         subroutine fit(self, x_values, y_values)

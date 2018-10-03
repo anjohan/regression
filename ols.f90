@@ -21,7 +21,7 @@ module mod_ols
             if (present(basis)) allocate(self%basis, source=basis)
             if (present(X)) self%X = X
 
-            self%method = "ols"
+            self%method = "OLS"
 
         end function
 
