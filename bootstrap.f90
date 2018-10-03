@@ -80,7 +80,7 @@ module mod_bootstrap
                 write(*, "(a)", advance="no") "Bootstrapping " // fitter%method // ": ["
 
                 bootstraps: do i = 1, num_bootstraps
-                    if (mod(i, max(1,num_bootstraps/10)) == 0) then
+                    if (mod(i, max(1,num_bootstraps/50)) == 0) then
                         write(*, "(a)", advance="no") "="
                     end if
 
