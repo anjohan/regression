@@ -38,12 +38,12 @@ module mod_lasso
             if (present(max_iterations)) then
                 self%max_iterations = max_iterations
             else
-                self%max_iterations = 100
+                self%max_iterations = 10000
             end if
             if (present(alpha)) then
                 self%alpha = alpha
             else
-                self%alpha = 1.0d0
+                self%alpha = 0.0001d0
             end if
 
             self%method = "LASSO"
@@ -54,7 +54,7 @@ module mod_lasso
             real(dp), intent(in), optional :: x_values(:,:)
             real(dp), intent(in) :: y_values(:)
 
-            integer :: N, p, info, iteration, max_iterations
+            integer :: N, p, info, i, max_iterations
             real(dp), allocatable :: X_T(:,:), X_T_X(:,:), H(:,:), H_cholesky(:), &
                                      X_T_y(:), two_X_T_y(:), &
                                      beta(:), grad(:), new_beta(:)
@@ -88,13 +88,23 @@ module mod_lasso
 
             allocate(beta(p), grad(p))
             grad_norm = 2*grad_tolerance
-
+!            iteration = 0
+!            beta(:) = 1
+!            do while (grad_norm > grad_tolerance .and. iteration < max_iterations)
+!                iteration = iteration + 1
+!                grad(:) = -2*matmul(X_T, y_values - matmul(self%X, beta)) + lambda*sgn(beta)
+!                !grad(:) = -two_X_T_y + matmul(H, beta) + lambda*sgn(beta)
+!                beta(:) = beta(:) - 0.0001*grad(:)
+!                !beta(:) = soft_threshold((X_T_y-matmul(X_T_X,beta))/N, lambda*alpha)/(1+lambda*(1-alpha))
+!                !beta(:) = soft_threshold(beta + alpha*(X_T_y - matmul(X_T_X,beta)), lambda*alpha)
+!                grad_norm = norm2(grad)
+!                write(*,*) grad_norm
+!            end do
+!
+!            self%beta = beta
             !/lassostart/!
-            iteration = 0
             beta(:) = 1
-            minimisation: do while (grad_norm > grad_tolerance &
-                                    .and. iteration < max_iterations)
-                iteration = iteration + 1
+            minimisation: do i = 1, max_iterations
                 ! calculate right-hand side
                 beta(:) = two_X_T_y - lambda*sgn(beta)
 
@@ -105,33 +115,12 @@ module mod_lasso
                 ! calculate gradient and its norm
                 grad(:) = - two_X_T_y + matmul(H, beta) + lambda*sgn(beta)
                 grad_norm = norm2(grad)
+
+                ! check for convergence
+                if (grad_norm < grad_tolerance) exit minimisation
             end do minimisation
             !/lassoend/!
             self%beta = beta
-!
-!             write(*,*) iteration, max_iterations
-!             if (iteration < max_iterations) return
-!             min_grad_norm = grad_norm
-!             iteration = 0
-!             alpha = 1.0d0
-!             allocate(new_beta(p))
-!             do while (grad_norm > grad_tolerance &
-!                       .and. iteration < 1*max_iterations)
-!                 iteration = iteration + 1
-!                 reduce_alpha: do
-!                     new_beta(:) = beta(:) - alpha*grad(:)
-!                     grad(:) = - two_X_T_y + matmul(H, new_beta) + lambda*sgn(new_beta)
-!                     grad_norm = norm2(grad)
-!                     if (grad_norm < min_grad_norm) then
-!                         min_grad_norm = grad_norm
-!                         exit reduce_alpha
-!                     end if
-!                     alpha = 0.9d0*alpha
-!                 end do reduce_alpha
-!                 write(*,*) grad_norm, alpha
-!                 beta(:) = new_beta(:)
-!             end do
-!             self%beta = beta
         end subroutine
 
         elemental function sgn(x)
@@ -144,6 +133,19 @@ module mod_lasso
                 sgn = -1
             else
                 sgn = 0
+            end if
+        end function
+
+        elemental function soft_threshold(z, g) result(s)
+            real(dp), intent(in) :: z, g
+            real(dp) :: s
+
+            if (z > g) then
+                s = z - g
+            else if (z < -g) then
+                s = z + g
+            else
+                s = 0
             end if
         end function
 end module
