@@ -45,7 +45,6 @@ module mod_lasso
             else
                 self%alpha = 0.0001d0
             end if
-
             self%method = "LASSO"
         end function
 
