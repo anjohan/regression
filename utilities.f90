@@ -55,10 +55,10 @@ module mod_utilities
             if(.not. present(filebase)) return
 
             open(newunit=u1, file=filebase // "_x1.dat", status="replace")
-            write(u1, "(*(f0.6,:,/))") x1
+            write(u1, "(*(f0.6,:,','))") x1
             close(u1)
             open(newunit=u2, file=filebase // "_x2.dat", status="replace")
-            write(u2, "(*(f0.6,:,/))") x2
+            write(u2, "(*(f0.6,:,','))") x2
             close(u2)
 
         end function
