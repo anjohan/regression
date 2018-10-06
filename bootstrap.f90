@@ -36,9 +36,12 @@ module mod_bootstrap
             integer, intent(in) :: num_bootstraps
             real(dp), intent(in) :: x(:,:), y(:), test_fraction
 
+            class(regressor), allocatable :: fitter
             integer :: N, p, i, N_test, N_train
             real(dp), allocatable :: tmp_real(:), y_selection(:), &
-                                     X_original(:,:), X_selection(:,:)
+                                     X_original(:,:), X_selection(:,:), &
+                                     x_test(:,:), y_test(:), x_train(:,:), y_train(:), &
+                                     betas(:,:), y_predictions(:,:), R2s(:), MSEs(:)
             integer, allocatable :: indices(:)
 
             N = size(y)
@@ -46,60 +49,64 @@ module mod_bootstrap
 
             self%x = x; self%y = y
 
-            if (allocated(self%betas)) deallocate(self%betas)
-            if (allocated(self%y_predictions)) deallocate(self%y_predictions)
-
             N_test = nint(test_fraction * N)
             N_train = N - N_test
 
             call shuffle(self%x, self%y)
 
-            self%x_test = self%x(1:N_test,:)
-            self%y_test = self%y(1:N_test)
+            x_test = self%x(1:N_test,:)
+            y_test = self%y(1:N_test)
+            x_train = x(N_test+1:,:)
+            y_train = y(N_test+1:)
 
-            allocate(self%betas(p,num_bootstraps), &
-                     self%y_predictions(N_test, num_bootstraps), &
-                     self%R2s(num_bootstraps), &
-                     self%MSEs(num_bootstraps), &
+            allocate(betas(p,num_bootstraps), &
+                     y_predictions(N_test, num_bootstraps), &
+                     R2s(num_bootstraps), &
+                     MSEs(num_bootstraps), &
                      tmp_real(N_train), &
                      indices(N_train), &
                      X_selection(N_train,p), &
                      y_selection(N_train))
 
-            associate(betas         => self%betas, &
-                      y_predictions => self%y_predictions, &
-                      R2s           => self%R2s, &
-                      MSEs          => self%MSEs, &
-                      fitter        => self%fitter, &
-                      x_train       => x(N_test+1:,:), &
-                      y_train       => y(N_test+1:))
 
-                call fitter%create_X(x_train)
-                X_original = fitter%X
+            call self%fitter%create_X(x_train)
+            X_original = self%fitter%X
 
-                write(*, "(a)", advance="no") "Bootstrapping " // fitter%method // ": ["
+            write(*, "(a)", advance="no") "Bootstrapping " // self%fitter%method // ": ["
 
-                bootstraps: do i = 1, num_bootstraps
-                    if (mod(i, max(1,num_bootstraps/50)) == 0) then
-                        write(*, "(a)", advance="no") "="
-                    end if
+            !$omp parallel do private(fitter, i, tmp_real, indices, y_selection, X_selection) &
+            !$omp& shared(betas,y_predictions,MSEs,R2s)
+            bootstraps: do i = 1, num_bootstraps
+                if (mod(i, max(1,num_bootstraps/50)) == 0) then
+                    write(*, "(a)", advance="no") "="
+                end if
+                if (.not. allocated(fitter)) fitter = self%fitter
 
-                    call random_number(tmp_real)
-                    indices(:) = nint((N_train-1)*tmp_real) + 1
+                call random_number(tmp_real)
+                indices(:) = nint((N_train-1)*tmp_real) + 1
+                !write(*,*) size(indices)
 
-                    y_selection(:) = y_train(indices)
-                    X_selection(:,:) = X_original(indices,:)
+                y_selection(:) = y_train(indices)
+                X_selection(:,:) = X_original(indices,:)
 
-                    fitter%X = X_selection
+                fitter%X = X_selection
 
-                    call fitter%fit(y_values=y_selection)
-                    call fitter%predict(self%x_test, y_predictions(:,i), &
-                                        self%y_test, MSEs(i), R2s(i))
+                call fitter%fit(y_values=y_selection)
+                call fitter%predict(x_test, y_predictions(:,i), &
+                                         y_test, MSEs(i), R2s(i))
 
-                    betas(:, i) = fitter%beta
-                end do bootstraps
-                write(*,"(a)") "]"
-            end associate
+                betas(:, i) = fitter%beta
+                !write(*,*) "i = ", i
+            end do bootstraps
+            !$omp end parallel do
+            write(*,"(a)") "]"
+
+            self%x_test = x_test
+            self%y_test = y_test
+            self%betas = betas
+            self%y_predictions = y_predictions
+            self%MSEs = MSEs
+            self%R2s = R2s
 
             call self%post_analysis()
         end subroutine
