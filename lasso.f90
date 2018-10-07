@@ -43,9 +43,9 @@ module mod_lasso
             if (present(alpha)) then
                 self%alpha = alpha
             else
-                self%alpha = 0.0001d0
+                self%alpha = 0.2d0
             end if
-            self%method = "LASSO"
+            self%method = "LASSO (Newton)"
         end function
 
         subroutine fit(self, x_values, y_values)
@@ -53,11 +53,12 @@ module mod_lasso
             real(dp), intent(in), optional :: x_values(:,:)
             real(dp), intent(in) :: y_values(:)
 
-            integer :: N, p, info, i, max_iterations
+            integer :: N, p, info, i, max_iterations, j, k
             real(dp), allocatable :: X_T(:,:), X_T_X(:,:), H(:,:), H_cholesky(:), &
                                      X_T_y(:), two_X_T_y(:), &
-                                     beta(:), grad(:), new_beta(:)
-            real(dp) :: lambda, grad_norm, grad_tolerance, min_grad_norm, alpha
+                                     beta(:), grad(:), new_beta(:), &
+                                     X_col_norm2s(:), tmp_beta(:)
+            real(dp) :: lambda, grad_norm, grad_tolerance, min_grad_norm, alpha, tmp
 
             if (present(x_values)) call self%create_X(x_values)
 
@@ -69,6 +70,7 @@ module mod_lasso
             alpha = self%alpha
 
             associate(X => self%X)
+                X_col_norm2s = sum(X**2, dim=1)
                 X_T = transpose(X)
                 X_T_X = matmul(X_T, X)
             end associate
@@ -76,6 +78,7 @@ module mod_lasso
             H = 2*X_T_X
             X_T_y = matmul(X_T, y_values)
             two_X_T_y = 2*X_T_y
+
 
             ! create triag version for cholesky
             allocate(H_cholesky(p*(p+1)/2))
@@ -87,20 +90,28 @@ module mod_lasso
 
             allocate(beta(p), grad(p))
             grad_norm = 2*grad_tolerance
-!            iteration = 0
-!            beta(:) = 1
-!            do while (grad_norm > grad_tolerance .and. iteration < max_iterations)
-!                iteration = iteration + 1
-!                grad(:) = -2*matmul(X_T, y_values - matmul(self%X, beta)) + lambda*sgn(beta)
-!                !grad(:) = -two_X_T_y + matmul(H, beta) + lambda*sgn(beta)
-!                beta(:) = beta(:) - 0.0001*grad(:)
+!            beta(:) = 0
+!            do i = 1, max_iterations
+!                !grad(:) = -2*matmul(X_T, y_values - matmul(self%X, beta)) + lambda*sgn(beta)
+!                grad(:) = -two_X_T_y + matmul(H, beta) + lambda*sgn(beta)
+!                !beta(:) = beta(:) - 0.0001*grad(:)
 !                !beta(:) = soft_threshold((X_T_y-matmul(X_T_X,beta))/N, lambda*alpha)/(1+lambda*(1-alpha))
-!                !beta(:) = soft_threshold(beta + alpha*(X_T_y - matmul(X_T_X,beta)), lambda*alpha)
+!                !beta(:) = soft_threshold(beta + (X_T_y - matmul(X_T_X,beta))/N, lambda*alpha)/(1+lambda*(1-alpha))
+!                !beta(:) = soft_threshold(beta + (X_T_y - matmul(X_T_X,beta)), lambda*alpha)/X_col_norm2s
+!                tmp_beta = beta
+!                do j = 1, p
+!                    tmp  = X_T_y(j)
+!                    do k = 1, p
+!                        if (k /= j) tmp = tmp - tmp_beta(k)*X_T_X(j,k)
+!                    end do
+!                    beta(j) = soft_threshold(tmp, alpha*lambda)/(X_col_norm2s(j) + lambda*(1-alpha))
+!                end do
 !                grad_norm = norm2(grad)
 !                write(*,*) grad_norm
+!                if (grad_norm < grad_tolerance) exit
 !            end do
 !
-!            self%beta = beta
+!            self%beta = beta; return
             !/lassostart/!
             beta(:) = 1
             minimisation: do i = 1, max_iterations
