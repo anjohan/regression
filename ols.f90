@@ -1,5 +1,6 @@
 module mod_ols
     use mod_regressor
+    use mod_utilities, only: check_info
     use iso_fortran_env, only: dp => real64
     implicit none
 
@@ -30,8 +31,9 @@ module mod_ols
             real(dp), intent(in) :: y_values(:)
             real(dp), intent(in), optional :: x_values(:,:)
 
-            integer :: lwork, info, N, p
-            real(dp), allocatable :: work(:), X(:,:), y(:)
+            integer :: lwork, info, N, p, rank
+            real(dp) :: rcond
+            real(dp), allocatable :: work(:), X(:,:), y(:), s(:)
 
             if (present(x_values)) call self%create_X(x_values)
 
@@ -42,7 +44,7 @@ module mod_ols
             p = size(self%basis)
 
             ! copies, dgels modifies
-            X = self%x
+            X = self%X
             y = y_values
 
             call dgels("N", N, p, 1, X, N, y, N, work, lwork, info)
@@ -51,10 +53,18 @@ module mod_ols
             allocate(work(lwork))
             call dgels("N", N, p, 1, X, N, y, N, work, lwork, info)
 
-            if (info /= 0) then
-                write(*,"(a,i0)") "DGELS problem: info = ", info
-                error stop
-            end if
+            call check_info(info, "DGELS")
+
+            !allocate(s(p))
+            !rcond = -1.0d0
+
+            !call dgelss(N, p, 1, X, N, y, N, s, rcond, rank, work, lwork, info)
+            !lwork = nint(work(1))
+            !deallocate(work)
+            !allocate(work(lwork))
+            !call dgelss(N, p, 1, X, N, y, N, s, rcond, rank, work, lwork, info)
+
+            !call check_info(info, "DEGELSS")
 
             self%beta = y(1:p)
         end subroutine
