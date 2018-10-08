@@ -47,24 +47,24 @@ module mod_ols
             X = self%X
             y = y_values
 
-            call dgels("N", N, p, 1, X, N, y, N, work, lwork, info)
+!            call dgels("N", N, p, 1, X, N, y, N, work, lwork, info)
+!            lwork = nint(work(1))
+!            deallocate(work)
+!            allocate(work(lwork))
+!            call dgels("N", N, p, 1, X, N, y, N, work, lwork, info)
+!
+!            call check_info(info, "DGELS")
+
+            allocate(s(p))
+            rcond = -1.0d0
+
+            call dgelss(N, p, 1, X, N, y, N, s, rcond, rank, work, lwork, info)
             lwork = nint(work(1))
             deallocate(work)
             allocate(work(lwork))
-            call dgels("N", N, p, 1, X, N, y, N, work, lwork, info)
+            call dgelss(N, p, 1, X, N, y, N, s, rcond, rank, work, lwork, info)
 
-            call check_info(info, "DGELS")
-
-            !allocate(s(p))
-            !rcond = -1.0d0
-
-            !call dgelss(N, p, 1, X, N, y, N, s, rcond, rank, work, lwork, info)
-            !lwork = nint(work(1))
-            !deallocate(work)
-            !allocate(work(lwork))
-            !call dgelss(N, p, 1, X, N, y, N, s, rcond, rank, work, lwork, info)
-
-            !call check_info(info, "DEGELSS")
+            call check_info(info, "DGELSS")
 
             self%beta = y(1:p)
         end subroutine
