@@ -17,6 +17,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         set(CMAKE_Fortran_FLAGS_DEBUG "${CMAKE_Fortran_FLAGS_DEBUG} -fcheck=all")
         set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} -march=native")
     endif()
+
+else()
+    set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR})
 endif()
 
 find_package(LAPACK REQUIRED)
