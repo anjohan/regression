@@ -1,10 +1,3 @@
-#define SET_VARIABLE(variable, x) \
-if (present(variable)) then \
-    self % variable = variable \
-else \
-    self % variable = x \
-end if
-
 module mod_binary_logreg
     use mod_regressor
     use iso_fortran_env, only: dp => real64
@@ -35,38 +28,31 @@ module mod_binary_logreg
             if (present(basis)) allocate(self%basis, source=basis)
             if (present(X)) self%X = X
 
-            SET_VARIABLE(lambda, 0)
-            SET_VARIABLE(momentum, 0)
-            SET_VARIABLE(batch_size, 20)
-            SET_VARIABLE(tolerance, 1.0d4)
-            SET_VARIABLE(max_iterations, 100)
-
-
-!            if (present(lambda)) then
-!                self%lambda = lambda
-!            else
-!                self%lambda = 0
-!            end if
-!            if (present(momentum)) then
-!                self%momentum = momentum
-!            else
-!                self%momentum = 0
-!            end if
-!            if (present(batch_size)) then
-!                self%batch_size = batch_size
-!            else
-!                self%batch_size = 20
-!            end if
-!            if (present(tolerance)) then
-!                self%tolerance = tolerance
-!            else
-!                self%tolerance = 1.0d-4
-!            end if
-!            if (present(max_iterations)) then
-!                self%max_iterations = max_iterations
-!            else
-!                self%max_iterations = 100
-!            end if
+            if (present(lambda)) then
+                self%lambda = lambda
+            else
+                self%lambda = 0
+            end if
+            if (present(momentum)) then
+                self%momentum = momentum
+            else
+                self%momentum = 0
+            end if
+            if (present(batch_size)) then
+                self%batch_size = batch_size
+            else
+                self%batch_size = 20
+            end if
+            if (present(tolerance)) then
+                self%tolerance = tolerance
+            else
+                self%tolerance = 1.0d-4
+            end if
+            if (present(max_iterations)) then
+                self%max_iterations = max_iterations
+            else
+                self%max_iterations = 100
+            end if
 
             self%method = "binary_logreg"
         end function

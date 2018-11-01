@@ -24,7 +24,7 @@ endif()
 
 find_package(LAPACK REQUIRED)
 
-file(GLOB sources ${CMAKE_CURRENT_SOURCE_DIR}/src/*.F90)
+file(GLOB sources ${CMAKE_CURRENT_SOURCE_DIR}/src/*.*90)
 
 add_library(regression ${sources})
 target_link_libraries(regression ${LAPACK_LIBRARIES})
