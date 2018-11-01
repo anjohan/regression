@@ -65,7 +65,7 @@ module mod_binary_logreg
             integer :: N, p, batch_size, num_batches, i, j, idx, k
             integer, allocatable :: indices(:)
             real(dp), allocatable :: X_T(:,:), tmp_real(:), &
-                                     grad(:), beta(:)
+                                     grad(:), beta(:), prev_grad(:)
             real(dp) :: grad_norm, prediction
 
             if (present(x_values)) call self%create_X(x_values)
@@ -78,7 +78,7 @@ module mod_binary_logreg
 
             X_T = transpose(self%X)
             allocate(tmp_real(batch_size), &
-                     grad(p), beta(p))
+                     grad(p), beta(p), prev_grad(p))
 
             call random_number(beta)
 
@@ -93,10 +93,15 @@ module mod_binary_logreg
                         grad(:) = grad(:) + (prediction - y_values(idx))*X_T(:, idx)
                     end do
 
+                    if (self%lambda /= 0) grad(:) = grad(:) + self%lambda*beta(:)
+                    if (k > 1 .and. self%momentum /= 0) &
+                        grad(:) = self%momentum*prev_grad(:) + grad(:)
+
                     beta(:) = beta(:) - self%learning_rate/batch_size*grad(:)
                     grad_norm = maxval(abs(grad))
 
                     if (grad_norm < self%tolerance) exit steps
+                    prev_grad(:) = grad(:)
                 end do batches
             end do steps
 
