@@ -28,6 +28,8 @@ module mod_binary_logreg
             if (present(basis)) allocate(self%basis, source=basis)
             if (present(X)) self%X = X
 
+            self%learning_rate = learning_rate
+
             if (present(lambda)) then
                 self%lambda = lambda
             else
@@ -63,7 +65,6 @@ module mod_binary_logreg
             real(dp), intent(in), optional :: x_values(:,:)
 
             integer :: N, p, batch_size, num_batches, i, j, idx, k
-            integer, allocatable :: indices(:)
             real(dp), allocatable :: X_T(:,:), tmp_real(:), &
                                      grad(:), beta(:), prev_grad(:)
             real(dp) :: grad_norm, prediction
