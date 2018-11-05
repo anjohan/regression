@@ -128,7 +128,6 @@ module mod_binary_logreg
                     if (grad_norm < self%tolerance) exit steps
                     prev_grad(:) = grad(:)
                 end do batches
-                write(*,*) "grad_norm:", grad_norm
             end do steps
 
             self%beta = beta
