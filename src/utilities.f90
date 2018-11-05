@@ -1,6 +1,10 @@
 module mod_utilities
     use iso_fortran_env, only: dp => real64
 
+    interface shuffle
+        procedure :: shuffle_realreal, shuffle_realint, shuffle_intint
+    end interface
+
     contains
         subroutine add_noise(y, sigma)
             real(dp), intent(inout) :: y(:)
@@ -63,7 +67,7 @@ module mod_utilities
 
         end function
 
-        subroutine shuffle(x, y)
+        subroutine shuffle_realreal(x, y)
             real(dp), intent(inout) :: x(:,:), y(:)
 
             integer :: N, i, j
@@ -72,7 +76,53 @@ module mod_utilities
 
             N = size(y)
 
-            do i = N, 2, -1
+            do i = N, 1, -1
+                call random_number(tmp_real)
+                j = nint((N-1)*tmp_real) + 1
+                tmp_y = y(i)
+                y(i) = y(j)
+                y(j) = tmp_y
+                tmp_x = x(i,:)
+                x(i,:) = x(j,:)
+                x(j,:) = tmp_x(:)
+            end do
+        end subroutine
+
+        subroutine shuffle_intint(x, y)
+            integer, intent(inout) :: x(:,:)
+            integer, intent(inout) :: y(:)
+
+            integer :: N, i, j
+            real(dp) :: tmp_real
+            integer :: tmp_y
+            integer, allocatable :: tmp_x(:)
+
+            N = size(y)
+
+            do i = N, 1, -1
+                call random_number(tmp_real)
+                j = nint((N-1)*tmp_real) + 1
+                tmp_y = y(i)
+                y(i) = y(j)
+                y(j) = tmp_y
+                tmp_x = x(i,:)
+                x(i,:) = x(j,:)
+                x(j,:) = tmp_x(:)
+            end do
+        end subroutine
+
+        subroutine shuffle_realint(x, y)
+            real(dp), intent(inout) :: x(:,:)
+            integer, intent(inout) :: y(:)
+
+            integer :: N, i, j
+            real(dp) :: tmp_real
+            integer :: tmp_y
+            real(dp), allocatable :: tmp_x(:)
+
+            N = size(y)
+
+            do i = N, 1, -1
                 call random_number(tmp_real)
                 j = nint((N-1)*tmp_real) + 1
                 tmp_y = y(i)
