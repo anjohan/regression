@@ -67,8 +67,9 @@ module mod_utilities
 
         end function
 
-        subroutine shuffle_realreal(x, y)
+        subroutine shuffle_realreal(x, y, column_wise)
             real(dp), intent(inout) :: x(:,:), y(:)
+            logical, intent(in), optional :: column_wise
 
             integer :: N, i, j
             real(dp) :: tmp_real, tmp_y
@@ -82,15 +83,22 @@ module mod_utilities
                 tmp_y = y(i)
                 y(i) = y(j)
                 y(j) = tmp_y
-                tmp_x = x(i,:)
-                x(i,:) = x(j,:)
-                x(j,:) = tmp_x(:)
+                if (present(column_wise)) then
+                    tmp_x = x(:,i)
+                    x(:,i) = x(:,j)
+                    x(:,j) = tmp_x(:)
+                else
+                    tmp_x = x(i,:)
+                    x(i,:) = x(j,:)
+                    x(j,:) = tmp_x(:)
+                end if
             end do
         end subroutine
 
-        subroutine shuffle_intint(x, y)
+        subroutine shuffle_intint(x, y, column_wise)
             integer, intent(inout) :: x(:,:)
             integer, intent(inout) :: y(:)
+            logical, intent(in), optional :: column_wise
 
             integer :: N, i, j
             real(dp) :: tmp_real
@@ -105,15 +113,22 @@ module mod_utilities
                 tmp_y = y(i)
                 y(i) = y(j)
                 y(j) = tmp_y
-                tmp_x = x(i,:)
-                x(i,:) = x(j,:)
-                x(j,:) = tmp_x(:)
+                if (present(column_wise)) then
+                    tmp_x = x(:,i)
+                    x(:,i) = x(:,j)
+                    x(:,j) = tmp_x(:)
+                else
+                    tmp_x = x(i,:)
+                    x(i,:) = x(j,:)
+                    x(j,:) = tmp_x(:)
+                end if
             end do
         end subroutine
 
-        subroutine shuffle_realint(x, y)
+        subroutine shuffle_realint(x, y, column_wise)
             real(dp), intent(inout) :: x(:,:)
             integer, intent(inout) :: y(:)
+            logical, intent(in), optional :: column_wise
 
             integer :: N, i, j
             real(dp) :: tmp_real
@@ -128,9 +143,15 @@ module mod_utilities
                 tmp_y = y(i)
                 y(i) = y(j)
                 y(j) = tmp_y
-                tmp_x = x(i,:)
-                x(i,:) = x(j,:)
-                x(j,:) = tmp_x(:)
+                if (present(column_wise)) then
+                    tmp_x = x(:,i)
+                    x(:,i) = x(:,j)
+                    x(:,j) = tmp_x(:)
+                else
+                    tmp_x = x(i,:)
+                    x(i,:) = x(j,:)
+                    x(j,:) = tmp_x(:)
+                end if
             end do
         end subroutine
 
