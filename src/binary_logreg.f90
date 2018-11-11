@@ -123,7 +123,7 @@ module mod_binary_logreg
                     if (k+i > 2 .and. self%momentum /= 0) &
                         grad(:) = self%momentum*prev_grad(:) + grad(:)
 
-                    beta(:) = beta(:) - self%learning_rate*grad(:)
+                    beta(:) = beta(:) - self%learning_rate/batch_size*grad(:)
 
                     if (grad_norm < self%tolerance) exit steps
                     prev_grad(:) = grad(:)
